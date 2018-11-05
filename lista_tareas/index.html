@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Curso de Vue 2">
+    <meta name="author" content="https://styde.net">
+
+    <title>Curso de Vue 2 - Styde.net</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="style.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app" class="container">
+        <h2>Tareas</h2>
+
+        <ul class="list-group tasks">
+            <li is="app-task" v-for="(task, index) in tasks" :tasks="tasks" :task="task" :index="index"></li>
+        </ul>
+
+        <form @submit.prevent="createTask" class="new-task-form">
+            <input v-model="new_task" type="text" class="form-control">
+            <button class="btn btn-primary">Crear tarea</button>
+        </form>
+
+        <footer class="footer">
+            <p>&copy; 2017 Styde.net.</p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.1.8/dist/vue.js"></script>
+
+    <script type="text/x-template" id="task-template">
+        <li class="list-group-item" :class=" { editing: task.editing, completed: !task.pending} ">
+                <a @click="toggleStatus" href="#">
+                    <app-icon :img="task.pending ? 'unchecked' : 'check'"></app-icon>
+                </a>
+                <template v-if="!task.editing">
+                    <span class="description"> {{ task.description }} </span>
+                    <div>
+                        <a @click="edit" href="#">
+                            <app-icon img="edit"></app-icon>
+                        </a>
+                        <a @click="remove">
+                            <app-icon img="trash"></app-icon>
+                        </a>
+                    </div>
+                </template>
+                <template v-else>
+                    <input type="text" v-model="draft">
+                    <div>
+                        <a @click="update" href="#">
+                            <app-icon img="ok"></app-icon>
+                        </a>
+                        <a @click="discard" href="#">
+                            <app-icon img="remove"></app-icon>
+                        </a>
+                    </div>
+                </template>
+            </li>
+    </script>
+
+    <script>
+
+        Vue.component('app-task',{
+            template: '#task-template',
+            props: ['tasks', 'task', 'index'],
+            methods: {
+                toggleStatus: function () {
+                    this.task.pending = !this.task.pending;
+                },
+                edit: function () {
+                    this.tasks.forEach(task => {
+                        task.editing = false;
+                    });
+                    this.draft = this.task.description;
+                    this.task.editing = true;
+                },
+                update: function () {
+                    this.task.description = this.draft;
+                    this.task.editing = false;
+                },
+                discard: function () { this.task.editing = false; },
+                remove: function () {
+                    this.tasks.splice(this.index, 1);
+                }
+            }
+        });
+
+        Vue.component('app-icon',{
+            template: '<span :class="cssClasses" aria-hidden="true"></span>',
+            props: ['img'],
+            computed:{
+                cssClasses: function(){
+                    return 'glyphicon glyphicon-'+this.img;
+                }
+            }
+        });
+
+        var vm = new Vue({
+            el: '#app',
+            methods: {
+                createTask: function () {
+                    this.tasks.push({
+                        description: this.new_task,
+                        pending: true,
+                        editing: false
+                    });
+                    this.new_task = '';
+                },
+                deleteCompleted: function () {
+                    this.tasks = this.tasks.filter(function (task) {
+                        return task.pending;
+                    });
+                }
+            },
+            data: {
+                new_task: "",
+                draft: '',
+                tasks: [
+                    {
+                        description: 'tarea uno',
+                        pending: true,
+                        editing: false
+                    },
+                    {
+                        description: 'tarea dos',
+                        pending: true,
+                        editing: false
+                    },
+                    {
+                        description: 'tarea tres',
+                        pending: false,
+                        editing: false
+                    }
+                ]
+            }
+        });
+    </script>
+</body>
+
+</html>
