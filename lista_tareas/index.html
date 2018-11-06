@@ -20,7 +20,7 @@
         <h2>Tareas</h2>
 
         <ul class="list-group tasks">
-            <li is="app-task" v-for="(task, index) in tasks" :tasks="tasks" :task="task" :index="index"></li>
+            <li is="app-task" v-for="(task, index) in tasks" :task="task" :index="index" @remove="deleteTask"></li>
         </ul>
 
         <form @submit.prevent="createTask" class="new-task-form">
@@ -36,11 +36,11 @@
     <script src="https://unpkg.com/vue@2.1.8/dist/vue.js"></script>
 
     <script type="text/x-template" id="task-template">
-        <li class="list-group-item" :class=" { editing: task.editing, completed: !task.pending} ">
+        <li class="list-group-item" :class=" { editing: editing, completed: !task.pending} ">
                 <a @click="toggleStatus" href="#">
                     <app-icon :img="task.pending ? 'unchecked' : 'check'"></app-icon>
                 </a>
-                <template v-if="!task.editing">
+                <template v-if="!editing">
                     <span class="description"> {{ task.description }} </span>
                     <div>
                         <a @click="edit" href="#">
@@ -67,27 +67,43 @@
 
     <script>
 
+        var EventBus = new Vue;
+
         Vue.component('app-task',{
+            data: function(){
+                return {
+                    editing: false,
+                    draft: ''
+                }
+            },
             template: '#task-template',
-            props: ['tasks', 'task', 'index'],
+            props: ['task', 'index'],
+            created: function(){
+                EventBus.$on('editing', function(index){
+                    if(this.index != index){
+                        this.discard();
+                    }
+                }.bind(this));
+            },
             methods: {
                 toggleStatus: function () {
                     this.task.pending = !this.task.pending;
                 },
                 edit: function () {
-                    this.tasks.forEach(task => {
-                        task.editing = false;
-                    });
+
+                    EventBus.$emit('editing', this.index);
+
                     this.draft = this.task.description;
-                    this.task.editing = true;
+                    this.editing = true;
                 },
                 update: function () {
                     this.task.description = this.draft;
-                    this.task.editing = false;
+                    this.editing = false;
                 },
-                discard: function () { this.task.editing = false; },
+                discard: function () { this.editing = false; },
                 remove: function () {
-                    this.tasks.splice(this.index, 1);
+                    //this.tasks.splice(this.index, 1);
+                    this.$emit('remove', this.index);
                 }
             }
         });
@@ -117,26 +133,25 @@
                     this.tasks = this.tasks.filter(function (task) {
                         return task.pending;
                     });
+                },
+                deleteTask: function(index){
+                    this.tasks.splice(index, 1);
                 }
             },
             data: {
                 new_task: "",
-                draft: '',
                 tasks: [
                     {
                         description: 'tarea uno',
-                        pending: true,
-                        editing: false
+                        pending: true
                     },
                     {
                         description: 'tarea dos',
-                        pending: true,
-                        editing: false
+                        pending: true
                     },
                     {
                         description: 'tarea tres',
-                        pending: false,
-                        editing: false
+                        pending: false
                     }
                 ]
             }
